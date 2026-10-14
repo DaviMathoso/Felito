@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Felito — Catálogo</title>
+<style>
+  :root{
+    --paper:#efe8d7; --panel:#f8f4e9; --ink:#18140e; --ink-60:rgba(24,20,14,.62); --ink-35:rgba(24,20,14,.32);
+    --line:#18140e; --orange:#db7a47; --orange-bg:rgba(219,122,71,.14);
+    --blob-1:rgba(219,122,71,.30); --blob-2:rgba(193,160,118,.26);
+  }
+  :root:not([data-theme="light"]){ @media (prefers-color-scheme: dark){ --paper:#e8e0c9; --panel:#f2ecdc; } }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink); position:relative; overflow-x:hidden;
+    font-family:'Bookman Old Style','URW Bookman','Noto Serif',Georgia,serif;
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .blob{position:fixed; z-index:0; border-radius:58% 42% 60% 40%/45% 55% 45% 55%; pointer-events:none;}
+  .eyebrow{font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-60); display:flex; align-items:center; gap:7px;}
+  .dot{width:6px; height:6px; border-radius:50%; background:var(--orange); flex:0 0 auto;}
+  .hairline{border-top:1px solid var(--line);}
+
+  .topbar{position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between; padding:20px 34px; border-bottom:1px solid var(--line); flex-wrap:wrap; gap:14px;}
+  .brand-wrap{display:flex; align-items:center; gap:10px;}
+  .brand{font-size:19px; font-weight:bold; letter-spacing:.04em;}
+  .chip{font-size:10px; text-transform:uppercase; letter-spacing:.08em; border:1px solid var(--line); padding:3px 9px; border-radius:3px;}
+  .topnav{display:flex; gap:26px; font-size:12px; text-transform:uppercase; letter-spacing:.09em;}
+  .topnav a{color:var(--ink-60); text-decoration:none; cursor:pointer; background:none; border:none; font-family:inherit; font-size:inherit; letter-spacing:inherit; text-transform:inherit; padding:0;}
+  .topnav a.current{color:var(--ink); font-weight:bold;}
+  .topnav a.current::before{content:"[ ";}
+  .topnav a.current::after{content:" ]";}
+  .cta-pill{display:flex; align-items:center; gap:8px; font-family:inherit; font-size:11px; text-transform:uppercase; letter-spacing:.08em; border:1px solid var(--line); background:none; padding:9px 16px; border-radius:999px; cursor:pointer; color:var(--ink);}
+  .cta-pill:hover{background:var(--ink); color:var(--panel);}
+  .cta-pill:hover .dot{background:var(--panel);}
+
+  .screen{display:none;}
+  .screen.active{display:block;}
+
+  .layout{position:relative; z-index:2; max-width:1260px; margin:0 auto; padding:30px 34px; display:grid; grid-template-columns:170px 1fr; gap:26px; align-items:start;}
+
+  /* sidebar */
+  .sidebar .side-label{font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-60); padding:0 4px 10px;}
+  .sidebar nav a{display:flex; align-items:center; gap:8px; padding:11px 10px; text-decoration:none; color:var(--ink-60); font-size:12.5px; text-transform:uppercase; letter-spacing:.06em; border-top:1px solid var(--ink-35); cursor:pointer; background:none; border-left:none; border-right:none; border-bottom:none; font-family:inherit; width:100%; text-align:left;}
+  .sidebar nav a .dot{opacity:0;}
+  .sidebar nav a.active{color:var(--ink); font-weight:bold; background:var(--orange-bg);}
+  .sidebar nav a.active .dot{opacity:1;}
+
+  /* main panel */
+  .panel{border:1px solid var(--line); background:var(--panel); padding:30px 32px;}
+  .hero{display:flex; justify-content:space-between; gap:22px; flex-wrap:wrap; padding-bottom:26px;}
+  .hero-main{max-width:520px;}
+  .hero h1{font-size:clamp(34px,4.2vw,52px); line-height:.98; margin:12px 0 16px; font-weight:bold; text-transform:uppercase;}
+  .hero p{color:var(--ink-60); font-size:14px; line-height:1.55; max-width:48ch; margin:0;}
+  .hero-meta{text-align:right; font-size:11px; color:var(--ink-60); display:flex; flex-direction:column; gap:6px; white-space:nowrap;}
+
+  .grid{display:grid; grid-template-columns:repeat(3,1fr); gap:24px; padding:26px 0;}
+  .card-media{height:150px; border-radius:4px; position:relative; margin-bottom:14px;}
+  .m1{background:radial-gradient(circle at 35% 30%, #fbf7ec, #d8cdb2 75%);}
+  .m2{background:radial-gradient(circle at 40% 35%, #cf9a5c, #8c5a2c 80%);}
+  .m3{background:radial-gradient(circle at 35% 30%, #f4d7d0, #c75f66 85%);}
+  .badge{position:absolute; top:9px; left:9px; background:var(--orange); color:var(--panel); font-size:10px; text-transform:uppercase; letter-spacing:.07em; padding:4px 10px; border-radius:999px;}
+  .card-foot{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;}
+  .card h3{margin:0; font-size:16px; font-weight:bold;}
+  .price{font-size:13px; color:var(--ink-60);}
+  .card p{font-size:12.5px; color:var(--ink-60); line-height:1.5; margin:0 0 12px;}
+  .tags{display:flex; flex-wrap:wrap; gap:6px;}
+  .tag{font-size:10px; border:1px solid var(--ink-35); color:var(--ink-60); padding:3px 9px; border-radius:999px;}
+
+  .principles{display:grid; grid-template-columns:repeat(3,1fr); gap:24px; padding-top:26px;}
+  .principle p{font-size:12.5px; color:var(--ink-60); line-height:1.55; margin:8px 0 0;}
+
+  /* pedidos screen */
+  .orders-hero{display:flex; align-items:center; justify-content:space-between; padding-bottom:22px; flex-wrap:wrap; gap:14px;}
+  .orders-hero h1{font-size:clamp(28px,3.4vw,40px); margin:10px 0 0; font-weight:bold; text-transform:uppercase;}
+  .count{background:var(--orange-bg); color:var(--orange); font-size:13px; font-weight:bold; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;}
+  .orders-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:22px; padding-top:24px;}
+  .order-card{border:1px solid var(--line); padding:18px;}
+  .order-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+  .order-top span:first-child{font-size:14px; font-weight:bold;}
+  .status{font-size:10px; text-transform:uppercase; letter-spacing:.06em; padding:4px 10px; border-radius:999px;}
+  .status.prep{background:var(--orange); color:var(--panel);}
+  .status.done{border:1px solid var(--ink-35); color:var(--ink-60);}
+  .order-media{height:120px; border-radius:4px; margin-bottom:14px;}
+  .order-line{display:flex; justify-content:space-between; font-size:13px; color:var(--ink-60); padding:4px 0;}
+  .order-total{display:flex; justify-content:space-between; font-size:14px; font-weight:bold; border-top:1px solid var(--ink-35); margin-top:10px; padding-top:10px;}
+
+  footer{position:relative; z-index:2; border-top:1px solid var(--line); max-width:1260px; margin:10px auto 0; padding:28px 34px 40px;}
+  .foot-grid{display:flex; justify-content:space-between; gap:30px; flex-wrap:wrap;}
+  .foot-brand h4{font-size:19px; margin:0 0 8px; font-weight:bold;}
+  .foot-brand p{font-size:12.5px; color:var(--ink-60); max-width:34ch; margin:0; line-height:1.5;}
+  .foot-cols{display:flex; gap:50px; flex-wrap:wrap;}
+  .foot-cols .eyebrow{margin-bottom:10px;}
+  .foot-cols a{display:block; font-size:12.5px; color:var(--ink); text-decoration:none; margin-bottom:6px;}
+  .foot-cols a:hover{text-decoration:underline;}
+  .foot-bottom{display:flex; justify-content:space-between; font-size:10.5px; color:var(--ink-60); border-top:1px solid var(--ink-35); margin-top:22px; padding-top:16px; flex-wrap:wrap; gap:8px;}
+
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr; padding:22px 20px;}
+    .grid, .principles, .orders-grid{grid-template-columns:1fr 1fr;}
+    .topbar{padding:16px 20px;}
+  }
+  @media (max-width:560px){
+    .grid, .principles, .orders-grid{grid-template-columns:1fr;}
+    .panel{padding:22px 18px;}
+    .hero-meta{text-align:left;}
+    .topnav{order:3; width:100%; justify-content:flex-start;}
+  }
+</style>
+</head>
+<body>
+
+<div class="blob" style="width:340px; height:300px; left:-100px; bottom:-60px; background:var(--blob-1);"></div>
+<div class="blob" style="width:260px; height:230px; right:-80px; bottom:60px; background:var(--blob-2);"></div>
+
+<header class="topbar">
+  <div class="brand-wrap"><span class="brand">FELITO</span><span class="chip">Edition 01</span></div>
+  <nav class="topnav">
+    <a data-target="catalogo" class="current">Sabores</a>
+    <a>O Diário</a><a>Origem</a>
+  </nav>
+  <button class="cta-pill"><span class="dot"></span>Pedir_Online</button>
+</header>
+
+<!-- ===== TELA 1: CATÁLOGO ===== -->
+<section class="screen active" id="catalogo">
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="side-label">Menu</div>
+      <nav>
+        <a data-target="pedidos"><span class="dot"></span>Meus Pedidos</a>
+        <a>Carrinho</a>
+        <a>Avaliações</a>
+        <a>Fidelidade</a>
+      </nav>
+    </aside>
+
+    <main class="panel">
+      <div class="hero">
+        <div class="hero-main">
+          <div class="eyebrow"><span class="dot"></span>Formulação artesanal</div>
+          <h1>Felito </h1>
+          <p>Priorizamos a integridade da matéria-prima em vez de estabilizantes químicos para alcançar textura matemática e pureza absoluta.</p>
+        </div>
+        
+      </div>
+
+      <div class="hairline"></div>
+
+      <div class="grid">
+        <article class="card">
+          <div class="card-media m1"><span class="badge">Popular</span></div>
+          <div class="card-foot"><h3>Baunilha </h3><span class="price">R$ 32</span></div>
+          <p>Infusão a frio de favas de baunilha, leite integral orgânico e creme duplo. Maturado 48 horas para estabilidade molecular do sabor.</p>
+          <div class="tags"><span class="tag">Maturado</span><span class="tag">Puro</span><span class="tag">Infusão</span></div>
+        </article>
+        <article class="card">
+          <div class="card-media m2"></div>
+          <div class="card-foot"><h3>Doce de Leite</h3><span class="price">R$ 34</span></div>
+          <p>Redução autêntica de doce de leite mineiro, suavemente incorporada à nossa base crua. Decadente, denso e perfeitamente estruturado.</p>
+          <div class="tags"><span class="tag">Clássico</span><span class="tag">Caramelo</span><span class="tag">Local</span></div>
+        </article>
+        <article class="card">
+          <div class="card-media m3"></div>
+          <div class="card-foot"><h3>Romeu e Julieta</h3><span class="price">R$ 36</span></div>
+          <p>Homenagem ao clássico brasileiro: base de creme de Queijo Minas artesanal finalizada com coulis de goiabada orgânica e doce.</p>
+          <div class="tags"><span class="tag">Goiaba</span><span class="tag">Queijo</span><span class="tag">Herança</span></div>
+        </article>
+      </div>
+
+      <div class="hairline"></div>
+
+      <div class="principles">
+        <div class="principle"><div class="eyebrow">// Maturação Bruta</div><p>Os ingredientes nunca são apressados. Maturamos nossas fórmulas sem emulsificantes durante a noite para cristalização natural dos lipídios.</p></div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- ===== TELA 2: MEUS PEDIDOS ===== -->
+<section class="screen" id="pedidos">
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="side-label">Menu</div>
+      <nav>
+        <a data-target="pedidos" class="active"><span class="dot"></span>Meus Pedidos</a>
+        <a>Carrinho</a>
+        <a>Avaliações</a>
+        <a>Fidelidade</a>
+      </nav>
+    </aside>
+
+    <main class="panel">
+      <div class="orders-hero">
+        <div>
+          <div class="eyebrow"><span class="dot"></span>Acompanhamento // Tempo real</div>
+          <h1>Meus Pedidos</h1>
+        </div>
+        <span class="count">2</span>
+      </div>
+
+      <div class="hairline"></div>
+
+      <div class="orders-grid">
+        <div class="order-card">
+          <div class="order-top"><span>Pedido 1</span><span class="status prep">Em preparo</span></div>
+          <div class="order-media m1"></div>
+          <div class="order-line"><span>Baunilha </span><span>R$ 32</span></div>
+          <div class="order-line"><span>Romeu e Julieta</span><span>R$ 36</span></div>
+          <div class="order-total"><span>Total</span><span>R$ 68</span></div>
+        </div>
+
+        <div class="order-card">
+          <div class="order-top"><span>Pedido 2</span><span class="status done">Entregue</span></div>
+          <div class="order-media m2"></div>
+          <div class="order-line"><span>Doce de Leite </span><span>R$ 34</span></div>
+          <div class="order-total"><span>Total</span><span>R$ 34</span></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<footer>
+  <div class="foot-grid">
+    <div class="foot-brand">
+      <h4>FELITO</h4>
+      <p>Um laboratório culinário boutique que traduz técnicas clássicas de confeitaria em pura matéria fria estrutural.</p>
+    </div>
+    <div class="foot-cols">
+      <div>
+        <div class="eyebrow">Catálogo</div>
+        <a href="#">Baunilha</a>
+        <a href="#">Doce de Leite</a>
+        <a href="#">Romeu e Julieta</a>
+      </div>
+      <div>
+        <div class="eyebrow">Ateliê</div>
+        <a href="#">Curitiba, BR</a>
+        <a href="#">Contato</a>
+        <a href="#">Diário</a>
+      </div>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <span>© 2026 Felito Inc. // Fórmula bruta registrada.</span>
+    <span>Curitiba // 23.5505° S, 46.6333° W</span>
+  </div>
+</footer>
+
+<script>
+  const screens = document.querySelectorAll('.screen');
+  const topLink = document.querySelector('.topnav a[data-target="catalogo"]');
+
+  function goTo(target){
+    screens.forEach(s => s.classList.toggle('active', s.id === target));
+    topLink.classList.toggle('current', target === 'catalogo');
+    document.querySelectorAll('.sidebar nav a[data-target]').forEach(a=>{
+      a.classList.toggle('active', target === 'pedidos' && a.dataset.target === 'pedidos');
+    });
+  }
+
+  document.querySelectorAll('[data-target]').forEach(el=>{
+    el.addEventListener('click', ()=> goTo(el.dataset.target));
+  });
+</script>
+</body>
+</html>
