@@ -1,0 +1,38 @@
+services:
+  web:
+    image: felito-web:latest
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - >-
+        a2enmod rewrite ssl >/dev/null;
+        openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj /CN=localhost
+        -keyout /tmp/hosting.key -out /tmp/hosting.crt >/dev/null 2>&1;
+        exec apache2-foreground
+    ports:
+      - "127.0.0.1:8082:80"
+      - "127.0.0.1:8443:443"
+    volumes:
+      - ${FELITO_HOSTING_HTDOCS:?Defina o caminho absoluto do htdocs gerado}:/var/www/html:ro
+      - ./apache.conf:/etc/apache2/sites-available/000-default.conf:ro
+      - ./php.ini:/usr/local/etc/php/conf.d/hosting-check.ini:ro
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: felito_hosting
+      MARIADB_USER: hosting
+      MARIADB_PASSWORD: hosting_test_only
+      MARIADB_ROOT_PASSWORD: hosting_root_test_only
+      TZ: America/New_York
+    tmpfs:
+      - /var/lib/mysql
+    volumes:
+      - ../../database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ${FELITO_HOSTING_ADMIN_SQL:?Defina o caminho absoluto do gestor.sql gerado}:/docker-entrypoint-initdb.d/02-gestor.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 2s
+      timeout: 3s
+      retries: 40

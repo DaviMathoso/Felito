@@ -1,26 +1,40 @@
 <?php
-// PORTA DE ENTRADA: toda requisição passa por aqui.
+declare(strict_types=1);
+
 define('BASE_PATH', dirname(__DIR__));
 require BASE_PATH . '/app/bootstrap.php';
 
-use App\Controllers\{CatalogController, AuthController, OrderController};
+use App\Controllers\{AdminController, AuthController, CatalogController, OrderController};
 
-// Tabela de rotas:  'MÉTODO /caminho' => [Controller, método]
-// Para criar uma página nova: adicione uma linha aqui + um método no controller.
 $routes = [
-    'GET /'          => [CatalogController::class, 'index'],    // RF01, RF03
-    'GET /entrar'    => [AuthController::class,    'login'],    // RF05  (TODO)
-    'GET /cadastro'  => [AuthController::class,    'register'], // RF05  (TODO)
-    'GET /pedidos'   => [OrderController::class,   'index'],    // Meus pedidos (TODO)
+    'GET /' => [CatalogController::class, 'index'],
+    'GET /carrinho' => [OrderController::class, 'cart'],
+    'POST /carrinho' => [OrderController::class, 'cart'],
+    'GET /checkout' => [OrderController::class, 'checkout'],
+    'POST /checkout' => [OrderController::class, 'checkout'],
+    'GET /pedidos' => [OrderController::class, 'index'],
+    'GET /entrar' => [AuthController::class, 'login'],
+    'POST /entrar' => [AuthController::class, 'login'],
+    'GET /cadastro' => [AuthController::class, 'register'],
+    'POST /cadastro' => [AuthController::class, 'register'],
+    'POST /sair' => [AuthController::class, 'logout'],
+    'GET /gestor' => [AdminController::class, 'dashboard'],
+    'POST /gestor' => [AdminController::class, 'dashboard'],
+    'GET /gestor/produtos' => [AdminController::class, 'products'],
+    'POST /gestor/produtos' => [AdminController::class, 'products'],
+    'GET /gestor/estoque' => [AdminController::class, 'stock'],
+    'POST /gestor/estoque' => [AdminController::class, 'stock'],
 ];
 
-$path = rtrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/') ?: '/';
-$key  = $_SERVER['REQUEST_METHOD'] . ' ' . $path;
+$path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+if ($path !== '/') $path = rtrim($path, '/');
+$key = ($_SERVER['REQUEST_METHOD'] ?? 'GET') . ' ' . $path;
 
 if (!isset($routes[$key])) {
     http_response_code(404);
-    exit('Página não encontrada');
+    view('error', ['title' => 'Página não encontrada', 'message' => 'Este endereço não faz parte do catálogo Felito.']);
+    exit;
 }
 
-[$class, $method] = $routes[$key];
-(new $class())->$method();
+[$controller, $method] = $routes[$key];
+(new $controller())->$method();

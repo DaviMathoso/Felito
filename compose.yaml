@@ -1,0 +1,49 @@
+services:
+  web:
+    build: .
+    ports:
+      - "127.0.0.1:${FELITO_PORT:-8080}:80"
+    environment:
+      APP_ENV: local
+      DB_HOST: db
+      DB_NAME: felito
+      DB_USER: felito
+      DB_PASS: felito_local
+      FELITO_ADMIN_EMAIL: gestor@felito.local
+      FELITO_ADMIN_PASSWORD: ${FELITO_ADMIN_PASSWORD:-FelitoLocal123!}
+      FELITO_ADMIN_NAME: Gestor Felito
+    volumes:
+      - ./app:/var/www/html/app:ro
+      - ./config:/var/www/html/config:ro
+      - ./public:/var/www/html/public:ro
+      - ./views:/var/www/html/views:ro
+      - ./html_Referencia:/var/www/html/html_Referencia:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "-r", "$$s=@fsockopen('127.0.0.1',80); exit($$s ? 0 : 1);"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  db:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: felito
+      MARIADB_USER: felito
+      MARIADB_PASSWORD: felito_local
+      MARIADB_ROOT_PASSWORD: felito_root_local
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+volumes:
+  mariadb_data:

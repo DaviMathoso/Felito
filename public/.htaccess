@@ -1,0 +1,8 @@
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+RewriteEngine On
+
+RewriteRule (^|/)\. - [F,END]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [END]

@@ -1,0 +1,2 @@
+<?php $pageTitle = ($title ?? 'Não encontrado') . ' — Felito'; $displayTitle = $title ?? 'Algo saiu do caminho'; ?>
+<section class="narrow-layout"><div class="panel empty-state"><div class="eyebrow"><span class="dot"></span>Felito</div><h1><?= e($displayTitle) ?></h1><p><?= e($message ?? 'Tente novamente em alguns instantes.') ?></p><a class="button button-primary" href="/">Voltar ao catálogo</a></div></section>

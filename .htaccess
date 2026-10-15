@@ -1,0 +1,9 @@
+Options -Indexes -MultiViews
+RewriteEngine On
+
+# A configuração e o código interno nunca devem ser servidos por HTTP.
+RewriteRule (^|/)\. - [F,END]
+RewriteRule ^(?:app|config|views|database|docker|scripts|tests|Requisitos|html_Referencia)(?:/|$) - [F,END,NC]
+
+# Reescrita interna: mantém URL, método POST e query string originais.
+RewriteRule ^(?!public(?:/|$))(.*)$ public/$1 [L]

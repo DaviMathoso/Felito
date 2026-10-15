@@ -1,23 +1,40 @@
 <?php
-// Lê o .env (CHAVE=valor) e devolve as configurações do projeto.
-$env = [];
+declare(strict_types=1);
+
+$values = [];
 $file = BASE_PATH . '/.env';
 if (is_file($file)) {
     foreach (file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-        if ($line[0] !== '#' && str_contains($line, '=')) {
-            [$k, $v] = explode('=', $line, 2);
-            $env[trim($k)] = trim($v);
+        $line = trim($line);
+        if ($line === '' || $line[0] === '#' || !str_contains($line, '=')) {
+            continue;
         }
+        [$key, $value] = explode('=', $line, 2);
+        $key = trim($key);
+        $value = trim($value);
+        if (!preg_match('/^[A-Z_][A-Z0-9_]*$/', $key)) continue;
+        if (strlen($value) >= 2 && (($value[0] === '"' && str_ends_with($value, '"')) || ($value[0] === "'" && str_ends_with($value, "'")))) {
+            $value = substr($value, 1, -1);
+        }
+        $values[$key] = $value;
     }
 }
 
+$read = static function (string $key, string $default) use ($values): string {
+    $environment = function_exists('getenv') ? getenv($key) : false;
+    return $environment !== false ? $environment : ($values[$key] ?? $default);
+};
+$appEnv = $read('APP_ENV', 'production');
+
 return [
-    'app' => ['env' => $env['APP_ENV'] ?? 'production'],
-    'db'  => [
-        'host' => $env['DB_HOST'] ?? 'localhost',
-        'name' => $env['DB_NAME'] ?? 'felito',
-        'user' => $env['DB_USER'] ?? 'root',
-        'pass' => $env['DB_PASS'] ?? '',
+    'app' => [
+        'env' => $appEnv,
+        'https_only' => filter_var($read('APP_HTTPS_ONLY', $appEnv === 'local' ? 'false' : 'true'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) !== false,
     ],
-    'mercadopago' => ['token' => $env['MP_ACCESS_TOKEN'] ?? ''],
+    'db' => [
+        'host' => $read('DB_HOST', 'localhost'),
+        'name' => $read('DB_NAME', 'felito'),
+        'user' => $read('DB_USER', 'root'),
+        'pass' => $read('DB_PASS', ''),
+    ],
 ];

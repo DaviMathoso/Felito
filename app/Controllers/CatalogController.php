@@ -1,18 +1,18 @@
 <?php
+declare(strict_types=1);
+
 namespace App\Controllers;
 
 use App\Core\Database;
 
-// EXEMPLO COMPLETO: copie este padrão nos outros controllers.
-// Controller só pega dados e escolhe a tela. Regras ficam nos Services.
-class CatalogController
+final class CatalogController
 {
     public function index(): void
     {
-        $flavors = Database::pdo()
-            ->query('SELECT id, name, description, price, is_featured FROM flavors WHERE is_active = 1')
-            ->fetchAll();
-
-        view('catalog', ['flavors' => $flavors]);
+        $products = Database::pdo()->query(
+            'SELECT id, name, description, size_label, price, stock_qty, min_stock, is_featured
+             FROM products WHERE is_active = 1 ORDER BY is_featured DESC, name'
+        )->fetchAll();
+        view('catalog', ['products' => $products]);
     }
 }
