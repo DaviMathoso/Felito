@@ -4,6 +4,7 @@ $cartCount = array_sum(array_map('intval', $_SESSION['cart'] ?? []));
 $cartUnit = $cartCount === 1 ? 'item' : 'itens';
 $flashes = consumeFlashes();
 $pageTitle = $title ?? 'Felito — sorvetes artesanais';
+$hasCustomerMenu = in_array($name, ['catalog', 'cart', 'orders'], true);
 ?>
 <!doctype html>
 <html lang="pt-BR">
@@ -21,9 +22,9 @@ $pageTitle = $title ?? 'Felito — sorvetes artesanais';
   <header class="topbar">
     <a class="brand-wrap" href="/" aria-label="Felito, página inicial"><span class="brand">FELITO</span><span class="chip">Sorvetes artesanais</span></a>
     <nav class="topnav" aria-label="Navegação principal">
-      <a href="/"<?= ($_SERVER['REQUEST_URI'] ?? '/') === '/' ? ' aria-current="page"' : '' ?>>Sabores</a>
-      <a href="/pedidos">Meus pedidos</a>
-      <?php if ($user && $user['role'] === 'admin'): ?><a href="/gestor">Gestão</a><?php endif ?>
+      <a href="/"<?= $name === 'catalog' ? ' aria-current="page"' : '' ?>>Sabores</a>
+      <a href="/pedidos"<?= $name === 'orders' ? ' aria-current="page"' : '' ?>>Meus pedidos</a>
+      <?php if ($user && $user['role'] === 'admin'): ?><a href="/gestor"<?= in_array($name, ['admin_orders', 'admin_products', 'admin_stock'], true) ? ' aria-current="page"' : '' ?>>Gestão</a><?php endif ?>
     </nav>
     <div class="top-actions">
       <a class="button button-outline button-small" href="/carrinho">Carrinho <span class="cart-count" aria-label="<?= (int) $cartCount ?> <?= e($cartUnit) ?>"><?= (int) $cartCount ?></span></a>
@@ -39,7 +40,14 @@ $pageTitle = $title ?? 'Felito — sorvetes artesanais';
     <?php foreach ($flashes as $notice): ?>
       <div class="notice notice-<?= e($notice['type']) ?>" role="status"><?= e($notice['message']) ?></div>
     <?php endforeach ?>
-    <?= $content ?>
+    <?php if ($hasCustomerMenu): ?>
+      <div class="layout customer-layout<?= $name === 'catalog' ? ' catalog-layout' : '' ?>">
+        <?php require BASE_PATH . '/views/customer_menu.php'; ?>
+        <?= $content ?>
+      </div>
+    <?php else: ?>
+      <?= $content ?>
+    <?php endif ?>
   </main>
   <footer class="site-footer">
     <div class="footer-main">

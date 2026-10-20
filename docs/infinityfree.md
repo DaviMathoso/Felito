@@ -84,7 +84,13 @@ As telas de cadastro, produtos e estoque exercitam mbstring; a listagem do catá
 - **Loop de HTTPS:** confirme SSL ativo no domínio e a identificação de HTTPS pelo servidor; não desative a exigência de HTTPS no site público como solução permanente.
 - **Gestor não entra:** confira se importou `gestor.sql` e está usando as credenciais da mesma pasta gerada. Executar o empacotamento novamente gera outra senha, sem alterar o banco existente.
 
-Para atualizar o site, faça backup dos arquivos e exporte o banco pelo phpMyAdmin. Substitua os arquivos de aplicação preservando o `.env` real. Não reimporte schema/gestor em atualizações. Em caso de falha, restaure a cópia anterior dos arquivos; os ajustes de hospedagem não alteram a estrutura do banco.
+Para atualizar o site, gere um pacote sem configuração, SQL ou novas credenciais:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\package-infinityfree.ps1 -UpdateOnly
+```
+
+Faça backup dos arquivos antes do envio. Substitua os arquivos de aplicação preservando o `.env` real. Não reimporte schema/gestor em atualizações. Em caso de falha, restaure a cópia anterior dos arquivos; os ajustes de hospedagem não alteram a estrutura do banco. Se uma atualização futura exigir migração, exporte o banco pelo phpMyAdmin antes de aplicá-la; `-UpdateOnly` apenas empacota arquivos e não executa migrações.
 
 ## Fontes do provedor
 

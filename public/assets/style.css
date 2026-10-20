@@ -50,6 +50,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .layout, .content-layout { position: relative; z-index: 1; width: min(1320px, 100%); margin: 0 auto; padding: 34px clamp(18px, 3vw, 42px) 54px; }
 .layout { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 28px; align-items: start; }
 .sidebar { padding-top: 4px; }
+.customer-layout > .sidebar { min-width: 0; }
 .side-label, .eyebrow { color: var(--muted); font: 600 11px/1.4 var(--sans); letter-spacing: .12em; text-transform: uppercase; }
 .side-label { padding: 0 10px 12px; }
 .side-nav { display: grid; }
@@ -115,6 +116,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .notice-error { border-color: #ca9991; background: var(--danger-pale); color: #67251f; }
 .notice-info { border-color: #c5a878; background: #f4eddb; color: #51401f; }
 .content-layout { display: grid; gap: 20px; }
+.customer-layout > .content-layout { min-width: 0; width: 100%; margin: 0; padding: 0; }
 .page-heading, .manager-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; padding-bottom: 7px; }
 .page-heading h1, .manager-heading h1, .auth-panel h1, .narrow-layout h1 { font-size: clamp(33px, 4.2vw, 49px); }
 .page-heading > .text-link { flex: 0 0 auto; }

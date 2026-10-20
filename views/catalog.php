@@ -1,14 +1,4 @@
 <?php $title = 'Sabores artesanais — Felito'; ?>
-<div class="layout catalog-layout">
-  <aside class="sidebar" aria-label="Atalhos">
-    <div class="side-label">Sua visita</div>
-    <nav class="side-nav">
-      <a class="active" href="/" aria-current="page"><span class="dot"></span>Sabores do mês</a>
-      <a href="/carrinho"><span class="dot"></span>Seu carrinho</a>
-      <a href="/pedidos"><span class="dot"></span>Meus pedidos</a>
-    </nav>
-    <p class="sidebar-note">Preparado em pequenos lotes para chegar à sua mesa no ponto certo.</p>
-  </aside>
   <section class="panel">
     <div class="hero">
       <div class="hero-main">
@@ -48,4 +38,3 @@
       <div class="principle"><div class="eyebrow">03 / Retirada combinada</div><p>Informe o melhor dia. A equipe confirma a data com você pelo telefone.</p></div>
     </div>
   </section>
-</div>
