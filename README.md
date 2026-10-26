@@ -73,3 +73,9 @@ compose.yaml              serviços PHP/Apache e MariaDB
 Execute `powershell -ExecutionPolicy Bypass -File .\scripts\package-infinityfree.ps1` para gerar o ZIP de upload, o schema e o SQL de criação do gestor em uma pasta nova dentro de `output/`. A senha administrativa aleatória fica em um arquivo local separado do ZIP.
 
 Siga [o guia de publicação](docs/infinityfree.md) para criar o banco, ativar HTTPS, enviar os arquivos e configurar o `.env` com os dados do painel. O pacote usa `.htaccess` para manter as URLs atuais, proteger arquivos privados e funcionar dentro de `htdocs`. A rota de referência do protótipo continua exclusiva do Docker local.
+
+## Requisitos funcionais adicionais
+
+Os pedidos reservam estoque por cinco dias corridos. Reservas expiradas são liberadas na primeira requisição após o prazo; no painel, acompanhe pedidos vencidos e alertas persistentes de estoque baixo. O gestor também registra fechamentos mensais e configura pontos e brindes, creditados quando o pedido é marcado como entregue. Clientes podem solicitar resgates em **Fidelidade** e consultar/corrigir/exportar seus dados em **Meus dados**.
+
+Antes de atualizar um banco existente, faça backup e aplique uma vez `database/migrations/20261026_initial-plan.sql`; `database/schema.sql` atende somente bancos novos. Veja também [segurança, privacidade e operação](docs/seguranca-e-privacidade.md). Termos e política incluídos são rascunhos e precisam de revisão do responsável. O descarte automático permanece desativado até a definição da política de retenção.

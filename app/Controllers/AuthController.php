@@ -39,6 +39,7 @@ final class AuthController
             $email = strtolower(trim((string) ($_POST['email'] ?? '')));
             $phone = trim((string) ($_POST['phone'] ?? ''));
             $password = (string) ($_POST['password'] ?? '');
+            $acceptedTerms = ($_POST['accept_terms'] ?? '') === '1';
             $old = ['name' => $name, 'email' => $email, 'phone' => $phone];
 
             if ($name === '' || mb_strlen($name) > 120 || !filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190) {
@@ -50,19 +51,28 @@ final class AuthController
             if (strlen($password) < 10 || strlen($password) > 72) {
                 \failForm('/cadastro', 'A senha precisa ter entre 10 e 72 caracteres.', $old);
             }
+            if (!$acceptedTerms) {
+                \failForm('/cadastro', 'Aceite os Termos de Uso e a Política de Privacidade para criar sua conta.', $old);
+            }
 
             try {
-                $insert = Database::pdo()->prepare("INSERT INTO users (name, email, phone, password_hash, role) VALUES (?, ?, ?, ?, 'customer')");
+                $pdo = Database::pdo();
+                $pdo->beginTransaction();
+                $insert = $pdo->prepare("INSERT INTO users (name, email, phone, password_hash, role) VALUES (?, ?, ?, ?, 'customer')");
                 $insert->execute([$name, $email, $phone, password_hash($password, PASSWORD_DEFAULT)]);
-            } catch (\PDOException $error) {
-                if ((string) $error->getCode() === '23000') {
+                $userId = (int) $pdo->lastInsertId();
+                $pdo->prepare('INSERT INTO consent_records (user_id, terms_version, privacy_version) VALUES (?, ?, ?)')->execute([$userId, '2026-10-26-v1', '2026-10-26-v1']);
+                $pdo->commit();
+            } catch (\Throwable $error) {
+                if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
+                if ($error instanceof \PDOException && (string) $error->getCode() === '23000') {
                     \failForm('/cadastro', 'Este e-mail já possui uma conta. Entre para continuar.', $old);
                 }
                 throw $error;
             }
             session_regenerate_id(true);
             $_SESSION['user'] = [
-                'id' => (int) Database::pdo()->lastInsertId(), 'name' => $name,
+                'id' => $userId, 'name' => $name,
                 'email' => $email, 'phone' => $phone, 'role' => 'customer',
             ];
             \flash('success', 'Sua conta foi criada. Agora você pode concluir a encomenda.');

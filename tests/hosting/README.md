@@ -23,6 +23,8 @@ O teste HTTP cobre regras de acesso, sessões, cookies, CSRF, HTTPS 308, parâme
 
 Abra `https://localhost:8443` para testes manuais. O certificado é autoassinado, exclusivo do teste; seu aviso é esperado. Em produção use o certificado válido do provedor.
 
+O smoke também valida reserva de cinco dias e expiração/restauração, consentimento, exportação/solicitações de dados, pontos e resgates, fechamento mensal e alertas persistentes. Cadastro, login e validação de pedido precisam responder abaixo de 3 segundos no ambiente de teste; essa medição não substitui monitoramento do provedor em produção.
+
 Ao terminar, pare somente este ambiente:
 
 ```powershell

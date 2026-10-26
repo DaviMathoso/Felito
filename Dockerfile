@@ -9,6 +9,7 @@ COPY app/ app/
 COPY config/ config/
 COPY public/ public/
 COPY views/ views/
+COPY scripts/maintenance.php scripts/maintenance.php
 COPY html_Referencia/ html_Referencia/
 COPY docker/ docker/
 

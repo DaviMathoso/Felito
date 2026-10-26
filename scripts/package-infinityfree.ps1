@@ -20,6 +20,7 @@ if (-not $UpdateOnly) {
     Copy-Item -LiteralPath (Join-Path $projectRoot 'database/schema.sql') -Destination $outputRoot
 }
 Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/infinityfree.md') -Destination (Join-Path $outputRoot 'LEIA-ME.md')
+Copy-Item -LiteralPath (Join-Path $projectRoot 'database/migrations/20261026_initial-plan.sql') -Destination (Join-Path $outputRoot 'migration-20261026.sql')
 
 if (-not $UpdateOnly) {
     $randomBytes = New-Object byte[] 18
@@ -60,10 +61,11 @@ try {
 } finally { $archive.Dispose() }
 Write-Output "Pacote: $zipPath"
 if ($UpdateOnly) {
-    Write-Output 'Atualizacao: sem .env, SQL ou novas credenciais. Preserve o .env existente e nao importe SQL no banco.'
+    Write-Output 'Atualizacao: sem .env ou novas credenciais. Faça backup e aplique migration-20261026.sql uma vez antes de substituir os arquivos.'
 } else {
     Write-Output "Banco: $(Join-Path $outputRoot 'schema.sql')"
     Write-Output "Gestor: $(Join-Path $outputRoot 'gestor.sql')"
+    Write-Output "Migração para banco existente: $(Join-Path $outputRoot 'migration-20261026.sql')"
     Write-Output "Credenciais locais: $(Join-Path $outputRoot 'ACESSO-GESTOR.txt')"
     Write-Output 'O ZIP contém um .env de exemplo. Preencha as credenciais do banco na hospedagem.'
 }

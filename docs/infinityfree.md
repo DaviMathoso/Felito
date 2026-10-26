@@ -13,7 +13,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\package-infinityfree.ps1
 Requer PHP local com mbstring ou a imagem Docker `felito-web` (criada com `docker compose build web`). O script não altera o banco local. Cada execução gera uma pasta nova em `output/infinityfree-<data>/` contendo:
 
 - `felito-htdocs.zip`: somente o conteúdo que deve entrar em `htdocs`, incluindo os dois `.htaccess` e um `.env` de exemplo. Não contém banco, SQL nem senha do gestor.
-- `schema.sql`: estrutura das cinco tabelas e três sabores iniciais, para um banco novo.
+- `schema.sql`: estrutura completa e três sabores iniciais, para um banco novo.
+- `migration-20261026.sql`: atualização aditiva do banco existente; não é executada pelo empacotador.
 - `gestor.sql`: criação de uma conta administrativa com hash gerado por `password_hash()`. Não redefine contas existentes.
 - `ACESSO-GESTOR.txt`: e-mail e senha aleatória de 24 caracteres. Guardar somente no computador.
 - `LEIA-ME.md`: estas instruções.
@@ -65,11 +66,24 @@ O leitor aceita valores sem aspas ou com aspas simples/duplas ao redor; não faz
 
 As regras encaminham URLs para `public` internamente e bloqueiam arquivos ocultos e diretórios privados. A aplicação exige HTTPS em produção, preservando o método de requisições com redirecionamento 308. Cookies recebem `Secure` em conexões HTTPS. Erros inesperados retornam uma mensagem genérica; detalhes são enviados ao log de erros do PHP. Não são confiados cabeçalhos de proxy enviados pelo visitante.
 
-## 4. Conferir na conta real
+## 4. Atualizar banco existente
+
+Antes de enviar a versão que introduz reservas, privacidade, fidelidade e fechamento mensal:
+
+1. Exporte um backup pelo phpMyAdmin e confira se ele pode ser baixado.
+2. Importe `migration-20261026.sql` uma única vez no banco atual. Não importe `schema.sql` sobre um banco com dados nem repita a migração.
+3. Gere o pacote com `-UpdateOnly` e confira que a migração está fora do ZIP.
+4. Envie o ZIP ao `htdocs`, preservando o `.env` real. A aplicação não executa SQL automaticamente.
+
+Para bancos novos, importe somente `schema.sql` e `gestor.sql`; não importe a migração.
+
+## 5. Conferir na conta real
 
 - Abra `/`, `/carrinho`, `/entrar`, `/gestor/estoque` e uma URL inexistente. Confirme o layout e o favicon; rotas protegidas devem pedir login e a URL inexistente deve retornar 404.
 - Acesse `/.env`, `/config/config.php`, `/app/bootstrap.php` e `/views/layout.php`: devem ser bloqueados (403/404), sem exibir conteúdo. Não publique arquivos `phpinfo()` ou instaladores.
 - Cadastre um cliente, adicione um sabor e finalize um pedido. Confira persistência da sessão, total e baixa de estoque.
+- Confirme aceite versionado no cadastro, correção/exportação de dados, pontos após entrega, resgate de brinde, alerta de estoque baixo e fechamento de mês encerrado.
+- A reserva vence após cinco dias e é liberada na primeira requisição posterior. O InfinityFree não fornece cron neste projeto; sem tráfego, a execução não ocorre no instante exato do prazo.
 - Entre com a conta de `ACESSO-GESTOR.txt`; teste edição de produto, entrada/ajuste de estoque, sequência Recebido → Em preparo → Pronto para retirada → Entregue e cancelamento de outro pedido com devolução de estoque.
 - Confira os horários de pedidos e movimentações: gravação em UTC e exibição em São Paulo. Teste também no celular.
 - Confirme no navegador HTTPS sem aviso e cookie de sessão com `Secure`, `HttpOnly` e `SameSite=Lax`. Em HTTP deve haver redirecionamento para HTTPS.
@@ -90,7 +104,7 @@ Para atualizar o site, gere um pacote sem configuração, SQL ou novas credencia
 powershell -ExecutionPolicy Bypass -File .\scripts\package-infinityfree.ps1 -UpdateOnly
 ```
 
-Faça backup dos arquivos antes do envio. Substitua os arquivos de aplicação preservando o `.env` real. Não reimporte schema/gestor em atualizações. Em caso de falha, restaure a cópia anterior dos arquivos; os ajustes de hospedagem não alteram a estrutura do banco. Se uma atualização futura exigir migração, exporte o banco pelo phpMyAdmin antes de aplicá-la; `-UpdateOnly` apenas empacota arquivos e não executa migrações.
+Faça backup dos arquivos antes do envio. Substitua os arquivos de aplicação preservando o `.env` real. Não reimporte schema/gestor em atualizações. Para esta atualização, aplique a migração conforme a seção 4 antes de trocar os arquivos; `-UpdateOnly` empacota, mas não executa SQL.
 
 ## Fontes do provedor
 

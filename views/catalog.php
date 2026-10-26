@@ -15,7 +15,7 @@
       <div class="product-grid">
         <?php foreach ($products as $index => $product): ?>
           <article class="product-card">
-            <div class="product-art art-<?= $index % 3 ?>" aria-hidden="true"><span class="art-orbit"></span><span class="art-label">FELITO · LOTE ARTESANAL</span>
+            <div class="product-art art-<?= $index % 3 ?>"><?php if (!empty($product['image_path'])): ?><img class="product-image" src="<?= e($product['image_path']) ?>" alt="Sorvete de <?= e($product['name']) ?>"><?php else: ?><span class="art-orbit" aria-hidden="true"></span><span class="art-label" aria-hidden="true">FELITO · LOTE ARTESANAL</span><?php endif ?>
               <?php if ($product['is_featured']): ?><span class="badge">Destaque do mês</span><?php endif ?>
             </div>
             <div class="product-copy">

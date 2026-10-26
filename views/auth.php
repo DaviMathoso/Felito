@@ -14,7 +14,7 @@
         <label for="phone">Telefone para confirmação</label><input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="30" required value="<?= e($old['phone'] ?? '') ?>">
       <?php endif ?>
       <label for="password">Senha</label><input id="password" name="password" type="password" autocomplete="<?= $mode === 'login' ? 'current-password' : 'new-password' ?>" minlength="<?= $mode === 'login' ? '1' : '10' ?>" maxlength="72" required>
-      <?php if ($mode === 'register'): ?><p class="field-help">Use pelo menos 10 caracteres.</p><?php endif ?>
+      <?php if ($mode === 'register'): ?><p class="field-help">Use pelo menos 10 caracteres.</p><label class="check-row"><input type="checkbox" name="accept_terms" value="1" required><span>Li e aceito os <a href="/termos" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="/politica-de-privacidade" target="_blank" rel="noopener">Política de Privacidade</a>.</span></label><?php endif ?>
       <button class="button button-primary button-full" type="submit"><?= $mode === 'login' ? 'Entrar na minha conta' : 'Criar conta e continuar' ?></button>
     </form>
     <p class="form-switch"><?= $mode === 'login' ? 'Ainda não tem conta? <a href="/cadastro">Cadastre-se</a>.' : 'Já tem uma conta? <a href="/entrar">Entre aqui</a>.' ?></p>

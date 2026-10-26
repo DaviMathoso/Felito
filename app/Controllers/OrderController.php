@@ -104,7 +104,7 @@ final class OrderController
     {
         $user = \requireLogin();
         $stmt = Database::pdo()->prepare(
-            'SELECT id, status, pickup_date, note, total, created_at FROM orders WHERE user_id = ? ORDER BY created_at DESC, id DESC'
+            'SELECT id, status, pickup_date, note, total, created_at, reserved_until FROM orders WHERE user_id = ? ORDER BY created_at DESC, id DESC'
         );
         $stmt->execute([$user['id']]);
         $orders = $stmt->fetchAll();

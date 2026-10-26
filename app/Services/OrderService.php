@@ -16,6 +16,7 @@ final class OrderService
         'ready' => ['delivered'],
         'delivered' => [],
         'cancelled' => [],
+        'expired' => [],
     ];
 
     public function create(int $userId, array $cart, string $pickupDate, ?string $note): int
@@ -52,7 +53,7 @@ final class OrderService
                 throw new DomainException('A data de retirada precisa ser hoje ou uma data futura.');
             }
 
-            $insertOrder = $pdo->prepare("INSERT INTO orders (user_id, status, pickup_date, note, total) VALUES (?, 'received', ?, ?, ?)");
+            $insertOrder = $pdo->prepare("INSERT INTO orders (user_id, status, pickup_date, note, total, reserved_until) VALUES (?, 'received', ?, ?, ?, DATE_ADD(UTC_TIMESTAMP(), INTERVAL 5 DAY))");
             $insertOrder->execute([$userId, $pickupDate, $note ?: null, self::fromCents($totalCents)]);
             $orderId = (int) $pdo->lastInsertId();
             $insertItem = $pdo->prepare('INSERT INTO order_items (order_id, product_id, product_name, size_label, quantity, unit_price) VALUES (?, ?, ?, ?, ?, ?)');
@@ -96,6 +97,9 @@ final class OrderService
             }
             $update = $pdo->prepare('UPDATE orders SET status = ? WHERE id = ?');
             $update->execute([$newStatus, $orderId]);
+            if ($newStatus === 'delivered') {
+                $this->awardLoyaltyPoints($pdo, $orderId);
+            }
             $pdo->commit();
         } catch (Throwable $error) {
             if ($pdo->inTransaction()) $pdo->rollBack();
@@ -111,7 +115,7 @@ final class OrderService
             $find = $pdo->prepare('SELECT status FROM orders WHERE id = ? FOR UPDATE');
             $find->execute([$orderId]);
             $order = $find->fetch();
-            if (!$order || in_array($order['status'], ['delivered', 'cancelled'], true)) {
+            if (!$order || in_array($order['status'], ['delivered', 'cancelled', 'expired'], true)) {
                 throw new DomainException('Este pedido já foi finalizado ou cancelado.');
             }
 
@@ -129,6 +133,53 @@ final class OrderService
             if ($pdo->inTransaction()) $pdo->rollBack();
             throw $error;
         }
+    }
+
+    public function expireDueReservations(): int
+    {
+        $pdo = Database::pdo();
+        $due = $pdo->query("SELECT id FROM orders WHERE status IN ('received','preparing','ready') AND reserved_until <= UTC_TIMESTAMP() ORDER BY id LIMIT 100")->fetchAll(PDO::FETCH_COLUMN);
+        $expired = 0;
+        foreach ($due as $id) {
+            $pdo->beginTransaction();
+            try {
+                $find = $pdo->prepare('SELECT user_id, status FROM orders WHERE id = ? FOR UPDATE');
+                $find->execute([(int) $id]);
+                $order = $find->fetch();
+                if (!$order || !in_array($order['status'], ['received', 'preparing', 'ready'], true)) {
+                    $pdo->commit();
+                    continue;
+                }
+                $items = $pdo->prepare('SELECT product_id, quantity FROM order_items WHERE order_id = ? ORDER BY product_id');
+                $items->execute([(int) $id]);
+                $restock = $pdo->prepare('UPDATE products SET stock_qty = stock_qty + ? WHERE id = ?');
+                $movement = $pdo->prepare("INSERT INTO stock_movements (product_id, order_id, movement_type, quantity_delta, reason) VALUES (?, ?, 'return', ?, ?)");
+                foreach ($items->fetchAll() as $item) {
+                    $restock->execute([$item['quantity'], $item['product_id']]);
+                    $movement->execute([$item['product_id'], (int) $id, $item['quantity'], "Reserva expirada do pedido #$id"]);
+                }
+                $pdo->prepare("UPDATE orders SET status = 'expired' WHERE id = ?")->execute([(int) $id]);
+                $pdo->commit();
+                $expired++;
+            } catch (Throwable $error) {
+                if ($pdo->inTransaction()) $pdo->rollBack();
+                throw $error;
+            }
+        }
+        return $expired;
+    }
+
+    private function awardLoyaltyPoints(PDO $pdo, int $orderId): void
+    {
+        $order = $pdo->prepare('SELECT user_id, total FROM orders WHERE id = ?');
+        $order->execute([$orderId]);
+        $row = $order->fetch();
+        if (!$row) return;
+        $rate = (float) ($pdo->query('SELECT points_per_real FROM loyalty_settings WHERE id = 1')->fetchColumn() ?: 1);
+        $points = (int) floor((float) $row['total'] * $rate);
+        if ($points < 1) return;
+        $insert = $pdo->prepare('INSERT IGNORE INTO loyalty_movements (user_id, order_id, points_delta, reason) VALUES (?, ?, ?, ?)');
+        $insert->execute([(int) $row['user_id'], $orderId, $points, "Pontos pelo pedido #$orderId entregue"]);
     }
 
     public static function toCents(string $amount): int

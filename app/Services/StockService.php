@@ -16,6 +16,66 @@ final class StockService
         )->fetchAll();
     }
 
+    public function syncAlerts(): void
+    {
+        $pdo = Database::pdo();
+        $pdo->exec("INSERT INTO low_stock_alerts (product_id, active, created_at, resolved_at)
+            SELECT id, 1, UTC_TIMESTAMP(), NULL FROM products WHERE is_active = 1 AND stock_qty <= min_stock
+            ON DUPLICATE KEY UPDATE created_at = IF(low_stock_alerts.active = 0, UTC_TIMESTAMP(), low_stock_alerts.created_at), resolved_at = NULL, active = 1");
+        $pdo->exec("UPDATE low_stock_alerts a JOIN products p ON p.id = a.product_id
+            SET a.active = 0, a.resolved_at = UTC_TIMESTAMP() WHERE a.active = 1 AND (p.is_active = 0 OR p.stock_qty > p.min_stock)");
+    }
+
+    public function activeAlerts(): array
+    {
+        return Database::pdo()->query('SELECT p.id, p.name, p.stock_qty, p.min_stock, a.created_at FROM low_stock_alerts a JOIN products p ON p.id = a.product_id WHERE a.active = 1 ORDER BY a.created_at, p.name')->fetchAll();
+    }
+
+    public function closeMonth(string $yearMonth): void
+    {
+        if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $yearMonth)) {
+            throw new DomainException('Selecione um mês válido.');
+        }
+        $periodStart = $yearMonth . '-01 00:00:00';
+        $nextStart = (new \DateTimeImmutable($periodStart, new \DateTimeZone('UTC')))->modify('first day of next month')->format('Y-m-d H:i:s');
+        if ($nextStart > gmdate('Y-m-d H:i:s')) {
+            throw new DomainException('O fechamento fica disponível após o término do mês.');
+        }
+
+        $pdo = Database::pdo();
+        $pdo->beginTransaction();
+        try {
+            $products = $pdo->query('SELECT id, stock_qty FROM products ORDER BY id FOR UPDATE')->fetchAll();
+            $period = $pdo->prepare("SELECT
+                COALESCE(SUM(CASE WHEN quantity_delta > 0 THEN quantity_delta ELSE 0 END), 0) entries_qty,
+                COALESCE(SUM(CASE WHEN quantity_delta < 0 THEN -quantity_delta ELSE 0 END), 0) exits_qty
+                FROM stock_movements WHERE product_id = ? AND created_at >= ? AND created_at < ?");
+            $after = $pdo->prepare('SELECT COALESCE(SUM(quantity_delta), 0) FROM stock_movements WHERE product_id = ? AND created_at >= ?');
+            $save = $pdo->prepare('INSERT INTO monthly_stock_closures (product_id, period_month, opening_qty, entries_qty, exits_qty, closing_qty) VALUES (?, ?, ?, ?, ?, ?)');
+            foreach ($products as $product) {
+                $id = (int) $product['id'];
+                $period->execute([$id, $periodStart, $nextStart]);
+                $totals = $period->fetch();
+                $after->execute([$id, $nextStart]);
+                $opening = (int) $product['stock_qty'] - (int) $after->fetchColumn() - ((int) $totals['entries_qty'] - (int) $totals['exits_qty']);
+                $closing = $opening + (int) $totals['entries_qty'] - (int) $totals['exits_qty'];
+                $save->execute([$id, $yearMonth, $opening, (int) $totals['entries_qty'], (int) $totals['exits_qty'], $closing]);
+            }
+            $pdo->commit();
+        } catch (Throwable $error) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            if ($error instanceof \PDOException && (string) $error->getCode() === '23000') {
+                throw new DomainException('Esse mês já foi fechado.');
+            }
+            throw $error;
+        }
+    }
+
+    public function monthlyClosures(): array
+    {
+        return Database::pdo()->query('SELECT c.period_month, c.opening_qty, c.entries_qty, c.exits_qty, c.closing_qty, c.closed_at, p.name AS product_name FROM monthly_stock_closures c JOIN products p ON p.id = c.product_id ORDER BY c.period_month DESC, p.name LIMIT 240')->fetchAll();
+    }
+
     public function change(int $productId, string $mode, int $quantity, string $reason, int $adminId): void
     {
         $reason = trim($reason);

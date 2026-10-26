@@ -3,11 +3,16 @@ $title = 'Pedidos — gestão Felito';
 $next = ['received' => 'preparing', 'preparing' => 'ready', 'ready' => 'delivered'];
 ?>
 <section class="content-layout manager-layout">
-  <div class="manager-heading"><div><div class="eyebrow"><span class="dot"></span>Painel do gestor</div><h1>Pedidos</h1><p>Confira as encomendas e atualize cada etapa da preparação.</p></div><nav class="manager-nav" aria-label="Menu de gestão"><a class="active" href="/gestor">Pedidos</a><a href="/gestor/produtos">Produtos</a><a href="/gestor/estoque">Estoque</a></nav></div>
-  <div class="stat-grid">
+  <div class="manager-heading"><div><div class="eyebrow"><span class="dot"></span>Painel do gestor</div><h1>Pedidos</h1><p>Confira as encomendas e atualize cada etapa da preparação.</p></div><?php require BASE_PATH . '/views/admin_nav.php'; ?></div>
+  <div class="stat-grid dashboard-stat-grid">
     <article class="panel stat-card"><span class="eyebrow">Pedidos recebidos</span><strong><?= (int) ($stats['received'] ?? 0) ?></strong><small>Aguardando preparo</small></article>
     <article class="panel stat-card"><span class="eyebrow">Em andamento</span><strong><?= (int) ($stats['active'] ?? 0) ?></strong><small>Do recebimento à retirada</small></article>
     <article class="panel stat-card"><span class="eyebrow">Prontos para retirada</span><strong><?= (int) ($stats['ready'] ?? 0) ?></strong><small>Aguardando o cliente</small></article>
+    <article class="panel stat-card"><span class="eyebrow">Reservas próximas do prazo</span><strong><?= (int) $attention['expiringReservations'] ?></strong><small>Expiram nas próximas 24 horas</small></article>
+    <article class="panel stat-card"><span class="eyebrow">Estoque abaixo do mínimo</span><strong><?= (int) $attention['lowStock'] ?></strong><small><a href="/gestor/estoque">Ver alertas e movimentações →</a></small></article>
+    <article class="panel stat-card"><span class="eyebrow">Brindes pendentes</span><strong><?= (int) $attention['redemptions'] ?></strong><small><a href="/gestor/fidelidade">Acompanhar resgates →</a></small></article>
+    <article class="panel stat-card"><span class="eyebrow">Pedidos expirados · 30 dias</span><strong><?= (int) ($stats['expired_30d'] ?? 0) ?></strong><small>Estoque devolvido automaticamente</small></article>
+    <article class="panel stat-card"><span class="eyebrow">Solicitações de privacidade</span><strong><?= (int) $attention['privacyRequests'] ?></strong><small><a href="/gestor/privacidade">Atender titulares →</a></small></article>
   </div>
   <section class="panel filter-panel"><form method="get" action="/gestor" class="filter-form"><label for="status-filter">Mostrar pedidos</label><select id="status-filter" name="status"><option value="">Todos</option><?php foreach (['received', 'preparing', 'ready', 'delivered', 'cancelled'] as $status): ?><option value="<?= e($status) ?>"<?= $filter === $status ? ' selected' : '' ?>><?= e(statusLabel($status)) ?></option><?php endforeach ?></select><button class="button button-outline button-small" type="submit">Filtrar</button></form><span class="muted-copy"><?= count($orders) ?> pedidos nesta lista</span></section>
   <?php if (!$orders): ?><div class="panel empty-state"><h2>Nenhum pedido neste filtro.</h2><p>As próximas encomendas aparecem aqui.</p></div>

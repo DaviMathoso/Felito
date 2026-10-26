@@ -70,7 +70,7 @@ function statusLabel(string $status): string
 {
     return match ($status) {
         'received' => 'Recebido', 'preparing' => 'Em preparo', 'ready' => 'Pronto para retirada',
-        'delivered' => 'Entregue', 'cancelled' => 'Cancelado', default => 'Em atualização',
+        'delivered' => 'Entregue', 'cancelled' => 'Cancelado', 'expired' => 'Expirado', default => 'Em atualização',
     };
 }
 

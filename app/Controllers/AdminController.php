@@ -31,9 +31,9 @@ final class AdminController
         }
 
         $filter = (string) ($_GET['status'] ?? '');
-        $statuses = ['received', 'preparing', 'ready', 'delivered', 'cancelled'];
+        $statuses = ['received', 'preparing', 'ready', 'delivered', 'cancelled', 'expired'];
         if (!in_array($filter, $statuses, true)) $filter = '';
-        $sql = 'SELECT o.id, o.status, o.pickup_date, o.note, o.total, o.created_at,
+        $sql = 'SELECT o.id, o.status, o.pickup_date, o.note, o.total, o.created_at, o.reserved_until,
                        u.name AS customer_name, u.email AS customer_email, u.phone AS customer_phone
                 FROM orders o JOIN users u ON u.id = o.user_id';
         if ($filter !== '') $sql .= ' WHERE o.status = ?';
@@ -55,10 +55,17 @@ final class AdminController
             "SELECT COUNT(*) AS total,
                     SUM(status = 'received') AS received,
                     SUM(status IN ('received', 'preparing', 'ready')) AS active,
-                    SUM(status = 'ready') AS ready
+                    SUM(status = 'ready') AS ready,
+                    SUM(status = 'expired' AND created_at >= UTC_TIMESTAMP() - INTERVAL 30 DAY) AS expired_30d
              FROM orders"
         )->fetch();
-        \view('admin_orders', ['orders' => $orders, 'filter' => $filter, 'stats' => $stats]);
+        $attention = [
+            'lowStock' => (int) Database::pdo()->query('SELECT COUNT(*) FROM products WHERE is_active = 1 AND stock_qty <= min_stock')->fetchColumn(),
+            'expiringReservations' => (int) Database::pdo()->query("SELECT COUNT(*) FROM orders WHERE status IN ('received','preparing','ready') AND reserved_until > UTC_TIMESTAMP() AND reserved_until <= UTC_TIMESTAMP() + INTERVAL 24 HOUR")->fetchColumn(),
+            'privacyRequests' => (int) Database::pdo()->query("SELECT COUNT(*) FROM privacy_requests WHERE status = 'open'")->fetchColumn(),
+            'redemptions' => (int) Database::pdo()->query("SELECT COUNT(*) FROM loyalty_redemptions WHERE status = 'pending'")->fetchColumn(),
+        ];
+        \view('admin_orders', ['orders' => $orders, 'filter' => $filter, 'stats' => $stats, 'attention' => $attention]);
     }
 
     public function products(): void
@@ -93,7 +100,7 @@ final class AdminController
             $stmt->execute([$editing]);
             $product = $stmt->fetch() ?: null;
         }
-        $products = $pdo->query('SELECT id, name, size_label, price, stock_qty, min_stock, is_active, is_featured FROM products ORDER BY is_active DESC, name')->fetchAll();
+        $products = $pdo->query('SELECT id, name, image_path, size_label, price, stock_qty, min_stock, is_active, is_featured FROM products ORDER BY is_active DESC, name')->fetchAll();
         \view('admin_products', ['products' => $products, 'product' => $product]);
     }
 
@@ -103,6 +110,11 @@ final class AdminController
         $pdo = Database::pdo();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             \verifyCsrf();
+            if (($_POST['action'] ?? '') === 'close_month') {
+                try { (new StockService())->closeMonth((string) ($_POST['year_month'] ?? '')); \flash('success', 'Fechamento mensal registrado para todos os produtos.'); }
+                catch (DomainException $error) { \flash('error', $error->getMessage()); }
+                \redirect('/gestor/estoque');
+            }
             $productId = filter_var($_POST['product_id'] ?? null, FILTER_VALIDATE_INT);
             $quantity = filter_var($_POST['quantity'] ?? null, FILTER_VALIDATE_INT);
             try {
@@ -122,6 +134,7 @@ final class AdminController
              LEFT JOIN users u ON u.id = sm.admin_user_id
              ORDER BY sm.created_at DESC, sm.id DESC LIMIT 60'
         )->fetchAll();
-        \view('admin_stock', ['products' => $products, 'movements' => $movements, 'lowStock' => (new StockService())->lowStock()]);
+        $stock = new StockService();
+        \view('admin_stock', ['products' => $products, 'movements' => $movements, 'lowStock' => $stock->lowStock(), 'alerts' => $stock->activeAlerts(), 'closures' => $stock->monthlyClosures()]);
     }
 }
