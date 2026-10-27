@@ -14,7 +14,7 @@ final class Database
         if (self::$connection === null) {
             $db = \config('db');
             $connection = new PDO(
-                "mysql:host={$db['host']};dbname={$db['name']};charset=utf8mb4",
+                "mysql:host={$db['host']};port={$db['port']};dbname={$db['name']};charset=utf8mb4",
                 $db['user'],
                 $db['pass'],
                 [

@@ -4,7 +4,7 @@ declare(strict_types=1);
 define('BASE_PATH', dirname(__DIR__));
 require BASE_PATH . '/app/bootstrap.php';
 
-use App\Controllers\{AdminController, AuthController, CatalogController, OrderController};
+use App\Controllers\{AdminController, AuthController, CatalogController, LoyaltyController, OrderController, PrivacyController};
 use App\Controllers\{ControleCatalogoController, ControleClientesController, ControleEstoqueController, ControleRelatoriosController, ControleVendasController};
 
 $routes = [
@@ -14,6 +14,13 @@ $routes = [
     'GET /checkout' => [OrderController::class, 'checkout'],
     'POST /checkout' => [OrderController::class, 'checkout'],
     'GET /pedidos' => [OrderController::class, 'index'],
+    'GET /fidelidade' => [LoyaltyController::class, 'index'],
+    'POST /fidelidade' => [LoyaltyController::class, 'index'],
+    'GET /privacidade' => [PrivacyController::class, 'page'],
+    'POST /privacidade' => [PrivacyController::class, 'page'],
+    'GET /privacidade/exportar' => [PrivacyController::class, 'export'],
+    'GET /termos' => [PrivacyController::class, 'terms'],
+    'GET /politica-de-privacidade' => [PrivacyController::class, 'policy'],
     'GET /entrar' => [AuthController::class, 'login'],
     'POST /entrar' => [AuthController::class, 'login'],
     'GET /cadastro' => [AuthController::class, 'register'],
@@ -25,6 +32,10 @@ $routes = [
     'POST /gestor/produtos' => [AdminController::class, 'products'],
     'GET /gestor/estoque' => [AdminController::class, 'stock'],
     'POST /gestor/estoque' => [AdminController::class, 'stock'],
+    'GET /gestor/fidelidade' => [LoyaltyController::class, 'manage'],
+    'POST /gestor/fidelidade' => [LoyaltyController::class, 'manage'],
+    'GET /gestor/privacidade' => [PrivacyController::class, 'manageRequests'],
+    'POST /gestor/privacidade' => [PrivacyController::class, 'manageRequests'],
     // Controle de vendas do cliente (gestor)
     'GET /gestor/controle' => [ControleVendasController::class, 'index'],
     'POST /gestor/controle' => [ControleVendasController::class, 'index'],

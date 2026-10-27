@@ -1,9 +1,13 @@
 Options -Indexes -MultiViews
 RewriteEngine On
 
-# A configuração e o código interno nunca devem ser servidos por HTTP.
+# Proteger arquivos ocultos (incluindo .env e .git) e codigo interno.
 RewriteRule (^|/)\. - [F,END]
-RewriteRule ^(?:app|config|views|database|docker|scripts|tests|Requisitos|html_Referencia)(?:/|$) - [F,END,NC]
+RewriteRule ^(?:app|config|views|database|docker|scripts|tests|Requisitos|html_Referencia|docs)(?:/|$) - [F,END,NC]
 
-# Reescrita interna: mantém URL, método POST e query string originais.
+# Nao disponibilizar artefatos do repositorio pela web.
+RewriteRule ^(?:README\.md|Dockerfile|compose\.yaml|sql\.txt|felito-controle-cliente\.patch)$ - [F,END,NC]
+RewriteRule \.(?:zip|patch|sql|md|txt|ya?ml|ps1|sh|bak|log)$ - [F,END,NC]
+
+# Encaminha para o front controller sem mudar a URL visivel.
 RewriteRule ^(?!public(?:/|$))(.*)$ public/$1 [L]

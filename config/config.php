@@ -34,6 +34,7 @@ return [
     ],
     'db' => [
         'host' => $read('DB_HOST', 'localhost'),
+        'port' => (int) $read('DB_PORT', '3306'),
         'name' => $read('DB_NAME', 'felito'),
         'user' => $read('DB_USER', 'root'),
         'pass' => $read('DB_PASS', ''),
