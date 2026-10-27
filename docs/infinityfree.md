@@ -90,6 +90,17 @@ Para bancos novos, importe somente `schema.sql` e `gestor.sql`; não importe a m
 
 As telas de cadastro, produtos e estoque exercitam mbstring; a listagem do catálogo e os pedidos exercitam PDO/MySQL. Falhas de extensão ou sessão exigem diagnóstico da conta pelo painel/suporte. A validação local não confirma as configurações ou cotas da conta real.
 
+## Atualizar um banco que já existe (controle de vendas)
+
+Quem já publicou a loja precisa criar as tabelas do controle de vendas uma única vez:
+
+1. No painel do provedor, abra o phpMyAdmin e use **Exportar** para guardar um backup do banco.
+2. Selecione o banco, abra **Importar** e envie `migrations/002_controle_cliente.sql` (a pasta `migrations` vem ao lado do ZIP gerado pelo script, fora do `htdocs`).
+3. Envie o novo ZIP (`-UpdateOnly`) como nas atualizações anteriores e entre com a conta do gestor.
+4. Abra `/gestor/controle`, lance um pedido de teste, confirme a baixa em **Estoque** e exclua o lançamento para ver o estorno.
+
+A migração usa `IF NOT EXISTS` e `INSERT IGNORE`: repetir o arquivo não duplica locais, sabores, tamanhos ou preços iniciais. Opcionalmente, defina `FELITO_PIX_KEY` no `.env` para a mensagem de cobrança.
+
 ## Problemas comuns e recuperação
 
 - **Erro 500 em todas as páginas:** confira os dois `.htaccess` e o log PHP/Apache no painel. Não envie `docker/apache.conf`: ele contém configuração de servidor, não regras para hospedagem compartilhada.

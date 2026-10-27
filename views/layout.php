@@ -4,7 +4,7 @@ $cartCount = array_sum(array_map('intval', $_SESSION['cart'] ?? []));
 $cartUnit = $cartCount === 1 ? 'item' : 'itens';
 $flashes = consumeFlashes();
 $pageTitle = $title ?? 'Felito — sorvetes artesanais';
-$hasCustomerMenu = in_array($name, ['catalog', 'cart', 'orders', 'loyalty', 'privacy'], true);
+$hasCustomerMenu = in_array($name, ['catalog', 'cart', 'orders'], true);
 ?>
 <!doctype html>
 <html lang="pt-BR">
@@ -24,8 +24,7 @@ $hasCustomerMenu = in_array($name, ['catalog', 'cart', 'orders', 'loyalty', 'pri
     <nav class="topnav" aria-label="Navegação principal">
       <a href="/"<?= $name === 'catalog' ? ' aria-current="page"' : '' ?>>Sabores</a>
       <a href="/pedidos"<?= $name === 'orders' ? ' aria-current="page"' : '' ?>>Meus pedidos</a>
-      <?php if ($user): ?><a href="/fidelidade"<?= $name === 'loyalty' ? ' aria-current="page"' : '' ?>>Fidelidade</a><?php endif ?>
-      <?php if ($user && $user['role'] === 'admin'): ?><a href="/gestor"<?= in_array($name, ['admin_orders', 'admin_products', 'admin_stock', 'admin_loyalty', 'admin_privacy'], true) ? ' aria-current="page"' : '' ?>>Gestão</a><?php endif ?>
+      <?php if ($user && $user['role'] === 'admin'): ?><a href="/gestor"<?= (in_array($name, ['admin_orders', 'admin_products', 'admin_stock'], true) || str_starts_with($name, 'controle_')) ? ' aria-current="page"' : '' ?>>Gestão</a><?php endif ?>
     </nav>
     <div class="top-actions">
       <a class="button button-outline button-small" href="/carrinho">Carrinho <span class="cart-count" aria-label="<?= (int) $cartCount ?> <?= e($cartUnit) ?>"><?= (int) $cartCount ?></span></a>
@@ -53,7 +52,7 @@ $hasCustomerMenu = in_array($name, ['catalog', 'cart', 'orders', 'loyalty', 'pri
   <footer class="site-footer">
     <div class="footer-main">
       <div><div class="footer-brand">FELITO</div><p>Sorvetes artesanais feitos com ingredientes escolhidos com cuidado e tempo para maturar.</p></div>
-      <div><div class="eyebrow">Feito para saborear</div><a href="/">Conheça os sabores</a><a href="/carrinho">Seu carrinho</a><a href="/termos">Termos de Uso</a><a href="/politica-de-privacidade">Privacidade</a></div>
+      <div><div class="eyebrow">Feito para saborear</div><a href="/">Conheça os sabores</a><a href="/carrinho">Seu carrinho</a></div>
       <div><div class="eyebrow">Retirada</div><p>Data solicitada no pedido. A equipe confirma a disponibilidade pelo telefone cadastrado.</p></div>
     </div>
     <div class="footer-bottom"><span>© <?= date('Y') ?> Felito</span><span>Sorvetes artesanais sob encomenda</span></div>

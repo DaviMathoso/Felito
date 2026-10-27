@@ -29,6 +29,7 @@ $appEnv = $read('APP_ENV', 'production');
 return [
     'app' => [
         'env' => $appEnv,
+        'pix_key' => $read('FELITO_PIX_KEY', ''),
         'https_only' => filter_var($read('APP_HTTPS_ONLY', $appEnv === 'local' ? 'false' : 'true'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) !== false,
     ],
     'db' => [

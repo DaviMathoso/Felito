@@ -12,6 +12,7 @@ services:
       FELITO_ADMIN_EMAIL: gestor@felito.local
       FELITO_ADMIN_PASSWORD: ${FELITO_ADMIN_PASSWORD:-FelitoLocal123!}
       FELITO_ADMIN_NAME: Gestor Felito
+      FELITO_PIX_KEY: ${FELITO_PIX_KEY:-}
     volumes:
       - ./app:/var/www/html/app:ro
       - ./config:/var/www/html/config:ro

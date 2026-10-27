@@ -31,6 +31,36 @@ Escolha os sabores, ajuste as quantidades no carrinho e informe uma data de reti
 
 No painel do gestor, atualize cada pedido na ordem Recebido → Em preparo → Pronto para retirada → Entregue. Também é possível cancelar um pedido ainda não entregue; o estoque retorna automaticamente. Em **Produtos**, cadastre e edite sabores. Em **Estoque**, registre entradas ou ajustes para um saldo contado; movimentações e baixas de venda ficam no histórico.
 
+## Controle de vendas do cliente (gestor)
+
+O painel do gestor reúne o controle de vendas que o cliente usava antes (planilha/app próprio), agora ligado ao mesmo banco e ao mesmo login do gestor. Acesse **Gestor → Controle de vendas** (`/gestor/controle`). As tabelas começam com `ctl_` e **não mexem** nos pedidos nem no estoque da loja online.
+
+| Tela | O que faz |
+|---|---|
+| Vendas | Lançamentos por pedido (vários itens), filtros por mês, situação e cliente, troca rápida de situação (A Fazer, À Entregar, Entregue, Pago, Cancelado, Resgate), edição, exclusão, resumo mensal, exportar/importar CSV e JSON do sistema anterior. |
+| Clientes | Cadastro, busca, mesclagem de nomes repetidos e mensagem de cobrança para WhatsApp. |
+| Financeiro | Quanto cada cliente deve e quantas unidades faltam entregar; baixa em lote (Pago) e cobrança. |
+| Fidelidade | Selos por pedido, brindes com voucher, resgate e regras configuráveis. |
+| Estoque | Saldo por local, sabor e tamanho; produção em lotes com custo rateado por volume; transferências, entradas, ajustes e histórico; cadastro de locais. |
+| Produtos | Sabores, tamanhos e tabela de preços (global ou por local). |
+| Relatórios | Faturamento, ticket médio, ranking de sabores e clientes, comparação mensal. |
+
+Regras importantes:
+
+- Cada item vendido baixa o estoque do **local da venda**. Cancelar ou excluir devolve as unidades; o histórico registra tudo.
+- O estoque do controle aceita saldo negativo (venda sem produção registrada) e mostra o valor em vermelho.
+- A mensagem de cobrança inclui a chave Pix definida em `FELITO_PIX_KEY` (opcional, no `.env`).
+- Ao importar vendas antigas, marque "Dar baixa no estoque" somente se o estoque ainda não reflete essas vendas. Importar o mesmo arquivo duas vezes duplica os lançamentos.
+
+**Banco já existente:** rode uma vez `database/migrations/002_controle_cliente.sql` (faça backup antes). Com Docker, copie o arquivo para dentro do container para não perder os acentos:
+
+```powershell
+docker compose cp database/migrations/002_controle_cliente.sql db:/tmp/002.sql
+docker compose exec db sh -c 'mariadb --default-character-set=utf8mb4 -u"$MARIADB_USER" -p"$MARIADB_PASSWORD" "$MARIADB_DATABASE" < /tmp/002.sql'
+```
+
+Bancos novos já recebem as tabelas pelo `database/schema.sql`.
+
 ## Gerenciar o ambiente
 
 ```powershell
@@ -62,6 +92,7 @@ app/Core/Database.php     conexão PDO com MariaDB
 views/                    páginas renderizadas no servidor
 public/assets/style.css   estilo da loja e do painel
 database/schema.sql       tabelas e sabores iniciais
+database/migrations/       migrações SQL para bancos que já existem
 docker/                   inicialização do gestor
 compose.yaml              serviços PHP/Apache e MariaDB
 ```
